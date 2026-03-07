@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PlantCare AI - Advanced Plant Disease Detection</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
+scroll-behavior:smooth;
+}
+
+body{
+background:#f4f7f6;
+color:#333;
+}
+
+/* NAVBAR */
+nav{
+position:fixed;
+width:100%;
+background:white;
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:15px 60px;
+box-shadow:0 2px 10px rgba(0,0,0,0.05);
+z-index:1000;
+}
+
+nav .logo{
+font-weight:700;
+font-size:20px;
+color:#1b5e20;
+}
+
+nav a{
+text-decoration:none;
+margin-left:25px;
+color:#333;
+font-weight:500;
+}
+
+nav a:hover{
+color:#1b5e20;
+}
+
+/* SECTIONS */
+section{
+padding:100px 60px;
+min-height:100vh;
+}
+
+/* HERO */
+.hero{
+display:flex;
+justify-content:space-between;
+align-items:center;
+background:white;
+}
+
+.hero-text h1{
+font-size:42px;
+}
+
+.hero-text span{
+color:#1b5e20;
+}
+
+.hero-text p{
+margin:20px 0;
+}
+
+.btn{
+background:#1b5e20;
+color:white;
+padding:12px 25px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+text-decoration:none;
+display:inline-block;
+}
+
+.btn:hover{
+background:#2e7d32;
+}
+
+.hero img{
+width:420px;
+border-radius:15px;
+}
+
+/* FEATURES */
+.features{
+background:#f4f7f6;
+text-align:center;
+}
+
+.feature-boxes{
+display:flex;
+justify-content:space-around;
+margin-top:40px;
+}
+
+.feature{
+background:white;
+padding:30px;
+width:28%;
+border-radius:12px;
+box-shadow:0 5px 15px rgba(0,0,0,0.05);
+}
+
+/* STATS */
+.stats{
+display:flex;
+justify-content:space-around;
+background:#e8f5e9;
+padding:60px;
+text-align:center;
+}
+
+.stat h2{
+color:#1b5e20;
+font-size:35px;
+}
+
+/* UPLOAD */
+.upload-box{
+background:white;
+padding:50px;
+border-radius:12px;
+box-shadow:0 5px 20px rgba(0,0,0,0.05);
+text-align:center;
+}
+
+/* RESULT */
+.result-card{
+background:white;
+padding:40px;
+border-radius:12px;
+display:flex;
+gap:40px;
+box-shadow:0 5px 20px rgba(0,0,0,0.05);
+}
+
+footer{
+background:#1b5e20;
+color:white;
+text-align:center;
+padding:20px;
+}
+</style>
+</head>
+
+<body>
+
+<nav>
+<div class="logo">🌿 PlantCare AI</div>
+<div>
+<a href="#home">Home</a>
+<a href="#about">About</a>
+<a href="#upload">Upload</a>
+<a href="#result">Result</a>
+</div>
+</nav>
+
+<!-- HOME -->
+<section id="home" class="hero">
+<div class="hero-text">
+<h1>AI-Powered <span>Plant Disease Detection</span></h1>
+<p>Advanced plant disease detection using Transfer Learning for smarter agriculture.</p>
+<a href="#upload" class="btn">Start Detection</a>
+</div>
+<img src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6" alt="Plant">
+</section>
+
+<!-- FEATURES -->
+<section class="features">
+<h2>Why Choose PlantCare AI?</h2>
+<div class="feature-boxes">
+<div class="feature">
+<h3>⚡ Instant Detection</h3>
+<p>Real-time AI analysis in seconds.</p>
+</div>
+<div class="feature">
+<h3>High Accuracy</h3>
+<p>95%+ trained deep learning model accuracy.</p>
+</div>
+<div class="feature">
+<h3>📱 Easy to Use</h3>
+<p>Simple drag & drop image upload interface.</p>
+</div>
+</div>
+</section>
+
+<!-- STATS -->
+<section class="stats">
+<div class="stat">
+<h2>38+</h2>
+<p>Diseases Detected</p>
+</div>
+<div class="stat">
+<h2>95%</h2>
+<p>Accuracy</p>
+</div>
+<div class="stat">
+<h2>10+</h2>
+<p>Plant Species</p>
+</div>
+<div class="stat">
+<h2>24/7</h2>
+<p>Availability</p>
+</div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+<h1>About PlantCare AI</h1>
+<br>
+<p>
+PlantCare AI uses Transfer Learning with deep convolutional neural networks
+to accurately detect plant diseases from leaf images.
+</p>
+<br>
+<h3>Our Mission</h3>
+<p>
+To empower farmers and gardeners with AI-driven early disease detection
+for improved crop health and productivity.
+</p>
+<br>
+<h3>How It Works</h3>
+<ol>
+<li>Upload leaf image</li>
+<li>AI model analyzes image</li>
+<li>Instant prediction result displayed</li>
+</ol>
+</section>
+
+<!-- UPLOAD -->
+<section id="upload">
+<div class="upload-box">
+<h1>Upload Plant Image</h1>
+<br>
+<input type="file">
+<br><br>
+<button class="btn" onclick="showResult()">Analyze</button>
+</div>
+</section>
+
+<!-- RESULT -->
+<section id="result">
+<h1>Analysis Complete</h1>
+<br>
+<div class="result-card">
+<img src="https://images.unsplash.com/photo-1598515213692-5f7e0b0f8b52" width="250">
+<div>
+<h2>Plant: Tomato</h2>
+<h3 style="color:green;">Healthy</h3>
+<p>Confidence: 97%</p>
+<br>
+<a href="#upload" class="btn">Analyze Another</a>
+</div>
+</div>
+</section>
+
+<footer>
+© 2026 PlantCare AI | Advanced Plant Disease Detection Using Transfer Learning
+</footer>
+
+<script>
+function showResult(){
+document.getElementById("result").scrollIntoView({behavior:"smooth"});
+}
+</script>
+
+</body>
+</html>
