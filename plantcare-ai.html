@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PlantCare AI — Plant Disease Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --moss: #2D4A2D;
+    --forest: #1A3320;
+    --sage: #7A9E7E;
+    --leaf: #4CAF50;
+    --lime: #A8D5A2;
+    --cream: #F5F0E8;
+    --amber: #D4A853;
+    --rust: #C4622D;
+    --soil: #3D2B1F;
+    --mist: #E8F0E5;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--forest);
+    color: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    position: fixed;
+    width: 12px; height: 12px;
+    background: var(--leaf);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.15s ease, background 0.2s;
+    transform: translate(-50%, -50%);
+  }
+  .cursor-ring {
+    position: fixed;
+    width: 36px; height: 36px;
+    border: 1.5px solid rgba(76,175,80,0.4);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transition: transform 0.4s ease, width 0.3s, height 0.3s;
+    transform: translate(-50%, -50%);
+  }
+
+  /* Noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.6;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.4rem 3rem;
+    background: rgba(26,51,32,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(76,175,80,0.12);
+  }
+  .nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: var(--cream);
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+  .nav-logo span { color: var(--leaf); }
+  .nav-dot {
+    width: 8px; height: 8px;
+    background: var(--leaf);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { transform: scale(1); opacity:1; }
+    50% { transform: scale(1.6); opacity:0.6; }
+  }
+  .nav-links { display: flex; gap: 2.5rem; }
+  .nav-links a {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--sage);
+    text-decoration: none;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--cream); }
+  .nav-cta {
+    background: var(--leaf);
+    color: var(--forest) !important;
+    padding: 0.5rem 1.2rem;
+    border-radius: 2px;
+    font-weight: 500 !important;
+  }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    padding: 8rem 3rem 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse 60% 70% at 75% 50%, rgba(76,175,80,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 50% at 20% 80%, rgba(168,213,162,0.05) 0%, transparent 50%);
+  }
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(76,175,80,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(76,175,80,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  .hero-left { position: relative; z-index: 2; }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(76,175,80,0.1);
+    border: 1px solid rgba(76,175,80,0.25);
+    padding: 0.35rem 0.9rem;
+    border-radius: 100px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--lime);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+    animation: fadeUp 0.8s ease both;
+  }
+  .hero-badge::before {
+    content:'';
+    width:6px;height:6px;
+    background:var(--leaf);
+    border-radius:50%;
+    animation: pulse 1.5s infinite;
+  }
+
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(3rem, 5vw, 5.5rem);
+    font-weight: 900;
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.8s 0.1s ease both;
+  }
+  .hero-title em {
+    font-style: italic;
+    color: var(--leaf);
+  }
+  .hero-title .line2 {
+    display: block;
+    color: var(--sage);
+    font-weight: 400;
+    font-size: 0.65em;
+  }
+
+  .hero-desc {
+    font-size: 1.05rem;
+    color: rgba(245,240,232,0.65);
+    line-height: 1.7;
+    max-width: 480px;
+    margin-bottom: 2.5rem;
+    animation: fadeUp 0.8s 0.2s ease both;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 2.5rem;
+    margin-bottom: 3rem;
+    animation: fadeUp 0.8s 0.3s ease both;
+  }
+  .stat-item {}
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--cream);
+    line-height: 1;
+  }
+  .stat-num span { color: var(--leaf); font-size: 1.4rem; }
+  .stat-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--sage);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 0.3rem;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 1rem;
+    animation: fadeUp 0.8s 0.4s ease both;
+  }
+  .btn-primary {
+    background: var(--leaf);
+    color: var(--forest);
+    padding: 0.85rem 2rem;
+    border: none;
+    border-radius: 2px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: none;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+  }
+  .btn-primary:hover { background: var(--lime); transform: translateY(-2px); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--cream);
+    padding: 0.85rem 2rem;
+    border: 1px solid rgba(245,240,232,0.2);
+    border-radius: 2px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    cursor: none;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--leaf); color: var(--leaf); }
+
+  /* Hero visual */
+  .hero-right {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .plant-viz {
+    position: relative;
+    width: 400px;
+    height: 480px;
+  }
+  .viz-card {
+    position: absolute;
+    background: rgba(45,74,45,0.6);
+    border: 1px solid rgba(76,175,80,0.2);
+    border-radius: 4px;
+    backdrop-filter: blur(10px);
+    padding: 1.2rem 1.5rem;
+    animation: float 4s ease-in-out infinite;
+  }
+  .viz-card:nth-child(2) { animation-delay: -1.3s; }
+  .viz-card:nth-child(3) { animation-delay: -2.6s; }
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .viz-main {
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) !important;
+    width: 280px;
+    animation: none !important;
+  }
+  .viz-main-inner {
+    background: rgba(26,51,32,0.9);
+    border: 1px solid rgba(76,175,80,0.3);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .leaf-scan {
+    width: 100%;
+    height: 160px;
+    background: linear-gradient(135deg, #1a3320 0%, #2d4a2d 50%, #1a3320 100%);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .leaf-svg {
+    width: 100px;
+    opacity: 0.9;
+    filter: drop-shadow(0 0 12px rgba(76,175,80,0.4));
+  }
+  .scan-line {
+    position: absolute;
+    left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--leaf), transparent);
+    animation: scan 2.5s ease-in-out infinite;
+    box-shadow: 0 0 10px var(--leaf);
+  }
+  @keyframes scan {
+    0% { top: 0; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+  }
+  .viz-result {
+    padding: 1rem;
+  }
+  .result-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--sage);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 0.4rem;
+  }
+  .result-disease {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--amber);
+    margin-bottom: 0.8rem;
+  }
+  .confidence-bar {
+    height: 4px;
+    background: rgba(76,175,80,0.15);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 0.3rem;
+  }
+  .confidence-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--leaf), var(--lime));
+    border-radius: 2px;
+    width: 0%;
+    animation: fillBar 2s 1s ease forwards;
+  }
+  @keyframes fillBar { to { width: 94%; } }
+  .confidence-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--sage);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .viz-badge-card {
+    top: 15%;
+    right: -10px;
+    padding: 0.8rem 1rem;
+    min-width: 140px;
+  }
+  .viz-badge-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.58rem;
+    color: var(--sage);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.3rem;
+  }
+  .viz-badge-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--leaf);
+    line-height: 1;
+  }
+  .viz-badge-val small { font-size: 0.8rem; color: var(--sage); }
+
+  .viz-tags-card {
+    bottom: 18%;
+    left: -5px;
+    padding: 0.8rem 1rem;
+  }
+  .tag-row { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.58rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 2px;
+    border: 1px solid;
+  }
+  .tag.disease { color: var(--rust); border-color: rgba(196,98,45,0.3); background: rgba(196,98,45,0.08); }
+  .tag.healthy { color: var(--leaf); border-color: rgba(76,175,80,0.3); background: rgba(76,175,80,0.08); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* SECTION DIVIDER */
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0 3rem;
+    margin: 2rem 0;
+  }
+  .divider-line { flex: 1; height: 1px; background: rgba(76,175,80,0.15); }
+  .divider-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--sage);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  /* MODEL SECTION */
+  .model-section {
+    padding: 6rem 3rem;
+    background: linear-gradient(180deg, var(--forest) 0%, #0F2015 100%);
+    position: relative;
+  }
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 4rem;
+  }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 3.5vw, 3.5rem);
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .section-title em { color: var(--leaf); font-style: italic; }
+  .section-subtitle {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--sage);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 0.8rem;
+  }
+  .section-desc {
+    max-width: 380px;
+    color: rgba(245,240,232,0.55);
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+
+  /* Architecture flow */
+  .arch-flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+  }
+  .arch-node {
+    flex-shrink: 0;
+    background: rgba(45,74,45,0.4);
+    border: 1px solid rgba(76,175,80,0.2);
+    border-radius: 4px;
+    padding: 1.5rem;
+    min-width: 160px;
+    text-align: center;
+    position: relative;
+    transition: all 0.3s;
+  }
+  .arch-node:hover {
+    border-color: rgba(76,175,80,0.5);
+    background: rgba(45,74,45,0.7);
+    transform: translateY(-4px);
+  }
+  .arch-node.highlight {
+    border-color: rgba(76,175,80,0.5);
+    background: rgba(76,175,80,0.1);
+  }
+  .arch-icon {
+    font-size: 1.8rem;
+    margin-bottom: 0.6rem;
+  }
+  .arch-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--sage);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.3rem;
+  }
+  .arch-detail {
+    font-size: 0.8rem;
+    color: var(--cream);
+    font-weight: 500;
+  }
+  .arch-arrow {
+    flex-shrink: 0;
+    width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(76,175,80,0.4);
+    font-size: 1.2rem;
+  }
+
+  /* Classes grid */
+  .classes-section {
+    padding: 6rem 3rem;
+  }
+  .classes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1px;
+    border: 1px solid rgba(76,175,80,0.1);
+    overflow: hidden;
+    border-radius: 4px;
+  }
+  .class-item {
+    padding: 1.2rem;
+    background: rgba(26,51,32,0.5);
+    border: 1px solid rgba(76,175,80,0.08);
+    transition: all 0.2s;
+    cursor: none;
+  }
+  .class-item:hover {
+    background: rgba(45,74,45,0.8);
+    z-index: 1;
+  }
+  .class-crop {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--sage);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.2rem;
+  }
+  .class-disease {
+    font-size: 0.85rem;
+    color: var(--cream);
+    font-weight: 400;
+  }
+  .class-item.healthy .class-disease { color: var(--leaf); }
+  .class-item.severe .class-disease { color: var(--rust); }
+
+  /* Scenarios */
+  .scenarios-section {
+    padding: 6rem 3rem;
+    background: rgba(15,32,21,0.7);
+  }
+  .scenarios-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 3rem;
+  }
+  .scenario-card {
+    background: rgba(45,74,45,0.3);
+    border: 1px solid rgba(76,175,80,0.15);
+    border-radius: 4px;
+    padding: 2.5rem;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .scenario-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--leaf), var(--lime));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s;
+  }
+  .scenario-card:hover { border-color: rgba(76,175,80,0.35); transform: translateY(-6px); }
+  .scenario-card:hover::before { transform: scaleX(1); }
+  .scenario-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 4rem;
+    font-weight: 900;
+    color: rgba(76,175,80,0.1);
+    line-height: 1;
+    margin-bottom: 1rem;
+  }
+  .scenario-icon { font-size: 2rem; margin-bottom: 1rem; }
+  .scenario-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    line-height: 1.3;
+  }
+  .scenario-text {
+    font-size: 0.88rem;
+    color: rgba(245,240,232,0.6);
+    line-height: 1.7;
+  }
+
+  /* Demo Section */
+  .demo-section {
+    padding: 6rem 3rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: start;
+  }
+  .upload-zone {
+    border: 2px dashed rgba(76,175,80,0.25);
+    border-radius: 4px;
+    padding: 4rem 2rem;
+    text-align: center;
+    transition: all 0.3s;
+    cursor: none;
+    background: rgba(45,74,45,0.1);
+  }
+  .upload-zone:hover {
+    border-color: rgba(76,175,80,0.5);
+    background: rgba(45,74,45,0.2);
+  }
+  .upload-icon { font-size: 3rem; margin-bottom: 1.2rem; opacity: 0.7; }
+  .upload-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    margin-bottom: 0.6rem;
+  }
+  .upload-desc { font-size: 0.85rem; color: rgba(245,240,232,0.5); line-height: 1.6; }
+  .upload-btn {
+    display: inline-block;
+    margin-top: 1.5rem;
+    background: var(--leaf);
+    color: var(--forest);
+    padding: 0.7rem 1.8rem;
+    border-radius: 2px;
+    font-weight: 500;
+    font-size: 0.85rem;
+    cursor: none;
+  }
+
+  .result-panel { }
+  .result-panel-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--sage);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 2rem;
+  }
+  .result-items { display: flex; flex-direction: column; gap: 1rem; }
+  .result-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.2rem;
+    background: rgba(45,74,45,0.3);
+    border: 1px solid rgba(76,175,80,0.12);
+    border-radius: 2px;
+    transition: all 0.3s;
+  }
+  .result-row:hover { border-color: rgba(76,175,80,0.3); }
+  .result-rank {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--sage);
+    width: 24px;
+    text-align: center;
+  }
+  .result-name { flex: 1; font-size: 0.9rem; }
+  .result-bar-wrap { width: 120px; }
+  .result-bar {
+    height: 3px;
+    background: rgba(76,175,80,0.15);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .result-bar-fill {
+    height: 100%;
+    background: var(--leaf);
+    border-radius: 2px;
+    transition: width 1.5s ease;
+  }
+  .result-pct {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--sage);
+    margin-top: 0.2rem;
+    text-align: right;
+  }
+  .result-row.top .result-name { color: var(--leaf); font-weight: 500; }
+  .result-row.top { border-color: rgba(76,175,80,0.25); background: rgba(76,175,80,0.08); }
+
+  /* Footer */
+  footer {
+    padding: 3rem;
+    border-top: 1px solid rgba(76,175,80,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .footer-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+  .footer-logo span { color: var(--leaf); }
+  .footer-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--sage);
+    letter-spacing: 0.1em;
+  }
+  .footer-tech {
+    display: flex;
+    gap: 1rem;
+  }
+  .tech-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    padding: 0.3rem 0.6rem;
+    border: 1px solid rgba(76,175,80,0.2);
+    border-radius: 2px;
+    color: var(--sage);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* Metrics banner */
+  .metrics-banner {
+    background: rgba(45,74,45,0.35);
+    border-top: 1px solid rgba(76,175,80,0.12);
+    border-bottom: 1px solid rgba(76,175,80,0.12);
+    padding: 2.5rem 3rem;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1px;
+  }
+  .metric-item {
+    text-align: center;
+    padding: 1.5rem 1rem;
+    border-right: 1px solid rgba(76,175,80,0.1);
+  }
+  .metric-item:last-child { border-right: none; }
+  .metric-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: var(--cream);
+    line-height: 1;
+    display: block;
+  }
+  .metric-val .accent { color: var(--leaf); }
+  .metric-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--sage);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 0.4rem;
+    display: block;
+  }
+
+  /* Animate on scroll */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; padding-top: 7rem; }
+    .hero-right { display: none; }
+    .scenarios-grid { grid-template-columns: 1fr; }
+    .demo-section { grid-template-columns: 1fr; }
+    .metrics-banner { grid-template-columns: repeat(2, 1fr); }
+    nav { padding: 1.2rem 1.5rem; }
+    .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <div class="nav-dot"></div>
+    Plant<span>Care</span> AI
+  </div>
+  <div class="nav-links">
+    <a href="#model">Model</a>
+    <a href="#classes">Classes</a>
+    <a href="#scenarios">Applications</a>
+    <a href="#demo">Demo</a>
+    <a href="#demo" class="nav-cta">Try Now</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+
+  <div class="hero-left">
+    <div class="hero-badge">MobileNetV2 · Transfer Learning</div>
+    <h1 class="hero-title">
+      <em>Intelligent</em><br>
+      Plant Disease<br>
+      <span class="line2">Classification System</span>
+    </h1>
+    <p class="hero-desc">
+      Leveraging deep transfer learning on 87,000+ annotated leaf images to deliver precise, 
+      real-time disease identification across 38 distinct classes. Empowering farmers, 
+      gardeners, and agricultural professionals worldwide.
+    </p>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <div class="stat-num">87<span>K+</span></div>
+        <div class="stat-label">Training Images</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">38</div>
+        <div class="stat-label">Disease Classes</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">96<span>%</span></div>
+        <div class="stat-label">Accuracy</div>
+      </div>
+    </div>
+    <div class="hero-actions">
+      <button class="btn-primary">Analyze Leaf →</button>
+      <button class="btn-secondary">View Architecture</button>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="plant-viz">
+      <!-- Floating badge cards -->
+      <div class="viz-card viz-badge-card">
+        <div class="viz-badge-title">Model Accuracy</div>
+        <div class="viz-badge-val">96.4<small>%</small></div>
+      </div>
+
+      <!-- Main scan card -->
+      <div class="viz-card viz-main">
+        <div class="viz-main-inner">
+          <div class="leaf-scan">
+            <svg class="leaf-svg" viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M50 10 C80 10 95 35 90 65 C85 90 70 108 50 112 C30 108 15 90 10 65 C5 35 20 10 50 10Z" fill="rgba(76,175,80,0.3)" stroke="rgba(76,175,80,0.7)" stroke-width="1.5"/>
+              <path d="M50 15 L50 108" stroke="rgba(76,175,80,0.4)" stroke-width="1"/>
+              <path d="M50 40 C60 38 72 45 78 58" stroke="rgba(76,175,80,0.3)" stroke-width="0.8"/>
+              <path d="M50 55 C62 52 70 60 72 72" stroke="rgba(76,175,80,0.3)" stroke-width="0.8"/>
+              <path d="M50 40 C40 38 28 45 22 58" stroke="rgba(76,175,80,0.3)" stroke-width="0.8"/>
+              <circle cx="65" cy="50" r="5" fill="rgba(196,98,45,0.6)" stroke="rgba(196,98,45,0.9)" stroke-width="0.8"/>
+              <circle cx="35" cy="65" r="3.5" fill="rgba(196,98,45,0.5)" stroke="rgba(196,98,45,0.8)" stroke-width="0.8"/>
+              <circle cx="60" cy="72" r="4" fill="rgba(212,168,83,0.6)" stroke="rgba(212,168,83,0.9)" stroke-width="0.8"/>
+            </svg>
+            <div class="scan-line"></div>
+          </div>
+          <div class="viz-result">
+            <div class="result-label">Detection Result</div>
+            <div class="result-disease">Apple Scab — Early Stage</div>
+            <div class="confidence-bar">
+              <div class="confidence-fill"></div>
+            </div>
+            <div class="confidence-val">
+              <span>Confidence</span>
+              <span>94.3%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tags card -->
+      <div class="viz-card viz-tags-card">
+        <div class="viz-badge-title" style="margin-bottom:0.6rem">Detected Classes</div>
+        <div class="tag-row">
+          <span class="tag disease">Apple Scab</span>
+          <span class="tag disease">Cedar Rust</span>
+          <span class="tag healthy">Healthy</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- METRICS BANNER -->
+<div class="metrics-banner reveal">
+  <div class="metric-item">
+    <span class="metric-val">87<span class="accent">K</span></span>
+    <span class="metric-name">Annotated Images</span>
+  </div>
+  <div class="metric-item">
+    <span class="metric-val">38</span>
+    <span class="metric-name">Disease Classes</span>
+  </div>
+  <div class="metric-item">
+    <span class="metric-val">14</span>
+    <span class="metric-name">Crop Species</span>
+  </div>
+  <div class="metric-item">
+    <span class="metric-val">96<span class="accent">%</span></span>
+    <span class="metric-name">Top-1 Accuracy</span>
+  </div>
+  <div class="metric-item">
+    <span class="metric-val">~<span class="accent">2s</span></span>
+    <span class="metric-name">Inference Time</span>
+  </div>
+</div>
+
+<!-- MODEL ARCHITECTURE -->
+<section class="model-section" id="model">
+  <div class="section-header reveal">
+    <div>
+      <div class="section-subtitle">Transfer Learning Pipeline</div>
+      <h2 class="section-title">MobileNetV2<br><em>Architecture</em></h2>
+    </div>
+    <p class="section-desc">
+      Pre-trained on ImageNet's 1.4M images, fine-tuned on the New Plant Diseases Dataset. 
+      Depthwise separable convolutions enable efficient, mobile-ready inference without 
+      sacrificing classification accuracy.
+    </p>
+  </div>
+
+  <div class="arch-flow reveal">
+    <div class="arch-node">
+      <div class="arch-icon">🖼️</div>
+      <div class="arch-name">Input</div>
+      <div class="arch-detail">224×224 RGB</div>
+    </div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-node highlight">
+      <div class="arch-icon">🧠</div>
+      <div class="arch-name">MobileNetV2</div>
+      <div class="arch-detail">Pre-trained Base</div>
+    </div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-node">
+      <div class="arch-icon">📐</div>
+      <div class="arch-name">Global Avg Pool</div>
+      <div class="arch-detail">Feature Reduction</div>
+    </div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-node">
+      <div class="arch-icon">🔗</div>
+      <div class="arch-name">Dense Layer</div>
+      <div class="arch-detail">1024 units · ReLU</div>
+    </div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-node">
+      <div class="arch-icon">💧</div>
+      <div class="arch-name">Dropout</div>
+      <div class="arch-detail">Rate: 0.5</div>
+    </div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-node highlight">
+      <div class="arch-icon">🎯</div>
+      <div class="arch-name">Output</div>
+      <div class="arch-detail">38 Classes · Softmax</div>
+    </div>
+  </div>
+</section>
+
+<!-- DISEASE CLASSES -->
+<section class="classes-section" id="classes">
+  <div class="section-header reveal">
+    <div>
+      <div class="section-subtitle">Classification Taxonomy</div>
+      <h2 class="section-title">38 Disease<br><em>Categories</em></h2>
+    </div>
+    <p class="section-desc">
+      Covering diseases and healthy states across Apple, Cherry, Corn, Grape, Peach, 
+      Pepper, Potato, Strawberry, Tomato, and more.
+    </p>
+  </div>
+  <div class="classes-grid reveal">
+    <div class="class-item severe"><div class="class-crop">Apple</div><div class="class-disease">Apple Scab</div></div>
+    <div class="class-item severe"><div class="class-crop">Apple</div><div class="class-disease">Black Rot</div></div>
+    <div class="class-item"><div class="class-crop">Apple</div><div class="class-disease">Cedar Apple Rust</div></div>
+    <div class="class-item healthy"><div class="class-crop">Apple</div><div class="class-disease">✓ Healthy</div></div>
+    <div class="class-item healthy"><div class="class-crop">Cherry</div><div class="class-disease">✓ Healthy</div></div>
+    <div class="class-item"><div class="class-crop">Cherry</div><div class="class-disease">Powdery Mildew</div></div>
+    <div class="class-item severe"><div class="class-crop">Corn</div><div class="class-disease">Gray Leaf Spot</div></div>
+    <div class="class-item severe"><div class="class-crop">Corn</div><div class="class-disease">Common Rust</div></div>
+    <div class="class-item"><div class="class-crop">Corn</div><div class="class-disease">Northern Leaf Blight</div></div>
+    <div class="class-item healthy"><div class="class-crop">Corn</div><div class="class-disease">✓ Healthy</div></div>
+    <div class="class-item"><div class="class-crop">Grape</div><div class="class-disease">Black Rot</div></div>
+    <div class="class-item severe"><div class="class-crop">Grape</div><div class="class-disease">Black Measles</div></div>
+    <div class="class-item"><div class="class-crop">Grape</div><div class="class-disease">Leaf Blight</div></div>
+    <div class="class-item healthy"><div class="class-crop">Grape</div><div class="class-disease">✓ Healthy</div></div>
+    <div class="class-item"><div class="class-crop">Peach</div><div class="class-disease">Bacterial Spot</div></div>
+    <div class="class-item healthy"><div class="class-crop">Peach</div><div class="class-disease">✓ Healthy</div></div>
+    <div class="class-item"><div class="class-crop">Bell Pepper</div><div class="class-disease">Bacterial Spot</div></div>
+    <div class="class-item healthy"><div class="class-crop">Bell Pepper</div><div class="class-disease">✓ Healthy</div></div>
+    <div class="class-item severe"><div class="class-crop">Potato</div><div class="class-disease">Early Blight</div></div>
+    <div class="class-item severe"><div class="class-crop">Potato</div><div class="class-disease">Late Blight</div></div>
+    <div class="class-item healthy"><div class="class-crop">Potato</div><div class="class-disease">✓ Healthy</div></div>
+    <div class="class-item"><div class="class-crop">Raspberry</div><div class="class-disease">Leaf Disease</div></div>
+    <div class="class-item healthy"><div class="class-crop">Soybean</div><div class="class-disease">✓ Healthy</div></div>
+    <div class="class-item"><div class="class-crop">Squash</div><div class="class-disease">Powdery Mildew</div></div>
+    <div class="class-item"><div class="class-crop">Strawberry</div><div class="class-disease">Leaf Scorch</div></div>
+    <div class="class-item healthy"><div class="class-crop">Strawberry</div><div class="class-disease">✓ Healthy</div></div>
+    <div class="class-item severe"><div class="class-crop">Tomato</div><div class="class-disease">Early Blight</div></div>
+    <div class="class-item severe"><div class="class-crop">Tomato</div><div class="class-disease">Late Blight</div></div>
+    <div class="class-item"><div class="class-crop">Tomato</div><div class="class-disease">Leaf Mold</div></div>
+    <div class="class-item"><div class="class-crop">Tomato</div><div class="class-disease">Septoria Leaf Spot</div></div>
+    <div class="class-item"><div class="class-crop">Tomato</div><div class="class-disease">Spider Mites</div></div>
+    <div class="class-item"><div class="class-crop">Tomato</div><div class="class-disease">Target Spot</div></div>
+    <div class="class-item severe"><div class="class-crop">Tomato</div><div class="class-disease">Yellow Leaf Curl</div></div>
+    <div class="class-item"><div class="class-crop">Tomato</div><div class="class-disease">Mosaic Virus</div></div>
+    <div class="class-item severe"><div class="class-crop">Tomato</div><div class="class-disease">Bacterial Spot</div></div>
+    <div class="class-item healthy"><div class="class-crop">Tomato</div><div class="class-disease">✓ Healthy</div></div>
+    <div class="class-item"><div class="class-crop">Orange</div><div class="class-disease">Huanglongbing</div></div>
+  </div>
+</section>
+
+<!-- SCENARIOS -->
+<section class="scenarios-section" id="scenarios">
+  <div class="section-header reveal">
+    <div>
+      <div class="section-subtitle">Real-World Applications</div>
+      <h2 class="section-title">Three <em>Deployment</em><br>Scenarios</h2>
+    </div>
+  </div>
+  <div class="scenarios-grid">
+    <div class="scenario-card reveal">
+      <div class="scenario-num">01</div>
+      <div class="scenario-icon">🌾</div>
+      <h3 class="scenario-title">Automated Agricultural Monitoring</h3>
+      <p class="scenario-text">
+        Integrated into farm monitoring systems, PlantCare AI enables continuous, real-time 
+        crop health surveillance. Captures leaf imagery, classifies diseases instantly, 
+        and generates detailed diagnostic reports — reducing manual workload and 
+        improving yield outcomes at scale.
+      </p>
+    </div>
+    <div class="scenario-card reveal" style="transition-delay:0.1s">
+      <div class="scenario-num">02</div>
+      <div class="scenario-icon">📱</div>
+      <h3 class="scenario-title">Mobile App for Home Gardeners</h3>
+      <p class="scenario-text">
+        A consumer-facing mobile application empowers home gardeners to photograph 
+        affected leaves and receive instant, expert-level diagnosis. No agronomist 
+        required — just point, shoot, and act. MobileNetV2's efficiency ensures 
+        fast on-device or cloud inference.
+      </p>
+    </div>
+    <div class="scenario-card reveal" style="transition-delay:0.2s">
+      <div class="scenario-num">03</div>
+      <div class="scenario-icon">🎓</div>
+      <h3 class="scenario-title">Agricultural Education Tools</h3>
+      <p class="scenario-text">
+        Embedded into agricultural training platforms, the model provides hands-on 
+        learning experiences for students and technicians. Upload leaf images, receive 
+        instant feedback, and build practical pathology skills critical for 
+        modern precision agriculture.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section class="demo-section" id="demo">
+  <div class="reveal">
+    <div class="section-subtitle">Interactive Demo</div>
+    <h2 class="section-title" style="font-size:2.5rem; margin-bottom:2rem">
+      Analyze a<br><em>Plant Image</em>
+    </h2>
+    <div class="upload-zone">
+      <div class="upload-icon">🍃</div>
+      <div class="upload-title">Drop a leaf image here</div>
+      <p class="upload-desc">
+        Supports JPG, PNG, WEBP · Max 10MB<br>
+        Works best with clear, close-up leaf photos
+      </p>
+      <div class="upload-btn">Choose File →</div>
+    </div>
+  </div>
+
+  <div class="reveal" style="transition-delay:0.15s">
+    <div class="result-panel-title">Sample Classification Output</div>
+    <div class="result-items">
+      <div class="result-row top">
+        <span class="result-rank">01</span>
+        <span class="result-name">Tomato Late Blight</span>
+        <div class="result-bar-wrap">
+          <div class="result-bar"><div class="result-bar-fill" style="width:91%"></div></div>
+          <div class="result-pct">91.2%</div>
+        </div>
+      </div>
+      <div class="result-row">
+        <span class="result-rank">02</span>
+        <span class="result-name">Tomato Early Blight</span>
+        <div class="result-bar-wrap">
+          <div class="result-bar"><div class="result-bar-fill" style="width:5%"></div></div>
+          <div class="result-pct">5.1%</div>
+        </div>
+      </div>
+      <div class="result-row">
+        <span class="result-rank">03</span>
+        <span class="result-name">Potato Late Blight</span>
+        <div class="result-bar-wrap">
+          <div class="result-bar"><div class="result-bar-fill" style="width:2%"></div></div>
+          <div class="result-pct">2.3%</div>
+        </div>
+      </div>
+      <div class="result-row">
+        <span class="result-rank">04</span>
+        <span class="result-name">Tomato Leaf Mold</span>
+        <div class="result-bar-wrap">
+          <div class="result-bar"><div class="result-bar-fill" style="width:1%"></div></div>
+          <div class="result-pct">1.4%</div>
+        </div>
+      </div>
+      <div class="result-row">
+        <span class="result-rank">05</span>
+        <span class="result-name">Tomato Healthy</span>
+        <div class="result-bar-wrap">
+          <div class="result-bar"><div class="result-bar-fill" style="width:0.2%"></div></div>
+          <div class="result-pct">0.0%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Plant<span>Care</span> AI</div>
+  <div class="footer-tech">
+    <span class="tech-tag">MobileNetV2</span>
+    <span class="tech-tag">TensorFlow</span>
+    <span class="tech-tag">Transfer Learning</span>
+    <span class="tech-tag">87K Images</span>
+  </div>
+  <div class="footer-text">© 2026 PlantCare AI · Agricultural Intelligence</div>
+</footer>
+
+<script>
+  // Custom cursor
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursorRing');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    cursor.style.left = mx + 'px';
+    cursor.style.top = my + 'px';
+  });
+  function animRing() {
+    rx += (mx - rx) * 0.12;
+    ry += (my - ry) * 0.12;
+    ring.style.left = rx + 'px';
+    ring.style.top = ry + 'px';
+    requestAnimationFrame(animRing);
+  }
+  animRing();
+
+  // Reveal on scroll
+  const reveals = document.querySelectorAll('.reveal');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+    });
+  }, { threshold: 0.1 });
+  reveals.forEach(r => obs.observe(r));
+
+  // Hover cursor effect
+  document.querySelectorAll('button, .btn-primary, .btn-secondary, .upload-zone, .scenario-card, .arch-node, .class-item').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      cursor.style.transform = 'translate(-50%,-50%) scale(2)';
+      ring.style.width = '60px'; ring.style.height = '60px';
+    });
+    el.addEventListener('mouseleave', () => {
+      cursor.style.transform = 'translate(-50%,-50%) scale(1)';
+      ring.style.width = '36px'; ring.style.height = '36px';
+    });
+  });
+</script>
+</body>
+</html>
