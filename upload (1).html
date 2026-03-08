@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Upload Plant Image</title>
+  </head>
+  <body>
+    <h1>Upload Plant Image for Diagnosis</h1>
+    <form method="post" action="/predict" enctype="multipart/form-data">
+      <input type="file" name="file" accept="image/*" required>
+      <button type="submit">Submit</button>
+    </form>
+  </body>
+</html>
